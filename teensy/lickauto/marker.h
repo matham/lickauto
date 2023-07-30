@@ -61,6 +61,8 @@ class StreamMarker
     uint32_t _start_time;
     bool _sending;
     uint8_t _current_code;
+    bool _data_low;
+    int8_t _bit_state;
     
     uint8_t _clock_pin;
     uint8_t _data_pin;

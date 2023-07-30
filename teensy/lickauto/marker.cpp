@@ -18,10 +18,68 @@ void StreamMarker::setup(HostComm* host_comm)
 
 void StreamMarker::loop()
 {
+  uint8_t bit;
+
   if (!_sending)
     return;
 
-  // todo: continue sending active mark
+  if (_bit_state != -1 && micros() - _start_time < _duration)
+    return;
+
+  switch (_bit_state)
+  {
+    case -1:
+    case 1:
+    case 3:
+    case 5:
+    case 7:
+    case 9:
+    case 11:
+    case 13:
+      _bit_state++;
+      bit = 0x80 >> (_bit_state / 2);
+
+      if (_current_code & bit && _data_low)
+        digitalWrite(_data_pin, HIGH);
+      else if (!(_current_code & bit) && !_data_low)
+        digitalWrite(_data_pin, LOW);
+      _data_low = !(_current_code & bit);
+
+      digitalWrite(_clock_pin, HIGH);
+
+      _start_time = micros();
+      break;
+
+    case 0:
+      // first bit is sent flipped on clock down
+      if (_current_code & 0b10000000)
+        digitalWrite(_data_pin, LOW);
+      else
+        digitalWrite(_data_pin, HIGH);
+      _data_low = _current_code & 0b10000000;
+
+      digitalWrite(_clock_pin, LOW);
+
+      _start_time = micros();
+      _bit_state++;
+      break;
+
+    case 2:
+    case 4:
+    case 6:
+    case 8:
+    case 10:
+    case 12:
+    case 14:
+      digitalWrite(_clock_pin, LOW);
+
+      _start_time = micros();
+      _bit_state++;
+      break;
+  }
+
+  if (_bit_state == 15)
+    _sending = false;
 }
 
 HostError StreamMarker::add_mark(uint8_t* mark)
@@ -38,10 +96,7 @@ HostError StreamMarker::add_mark(uint8_t* mark)
   _current_code = get_next_code_val();
   *mark = _current_code;
   _sending = true;
-
-  // todo: begin mark
-
-  _start_time = micros();
+  _bit_state = -1;
 
   return HostError::no_error;
 }
@@ -75,6 +130,8 @@ void StreamMarker::host_msg(MarkerData* msg)
       _data_pin = enable_msg->data_pin;
       _sending = false;
       _enabled = true;
+      _data_low = true;
+      _bit_state = -1;
 
       pinMode(_clock_pin, OUTPUT);
       digitalWrite(_clock_pin, LOW);
