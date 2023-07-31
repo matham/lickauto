@@ -97,8 +97,8 @@ void ModIOBoard::host_msg(ModIOData* msg, HostComm* host_comm, StreamMarker* mar
         err = HostError::bad_input;
         break;
       }
-    case ModIOCmd::read_dig:
     case ModIOCmd::read_dig_cont_start:
+    case ModIOCmd::read_dig:
     case ModIOCmd::read_dig_cont_stop:
       if (msg->cmd != ModIOCmd::write_dig && msg->header.len != sizeof(ModIOData))
       {

@@ -14,6 +14,7 @@ enum class HostError : uint8_t {
   not_running,
   bad_state,
   program_error,
+  dropping_data,
   end,
 };
 
@@ -21,6 +22,8 @@ enum class HostError : uint8_t {
 enum class HostCode : uint8_t {
   modio_board = 0,
   stream_marker,
+  comm,
+  echo,
   end,
 };
 
@@ -45,6 +48,9 @@ class HostComm
   
   private:
     StreamMarker* _marker;
+
+    uint8_t _read_buff[256];
+    uint8_t _read_buff_n;
 
 };
 
