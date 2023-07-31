@@ -115,6 +115,9 @@ void ModIOBoard::host_msg(ModIOData* msg, HostComm* host_comm, StreamMarker* mar
         err = HostError::no_resource;
         break;
       }
+
+      if (msg->cmd == ModIOCmd::read_dig_cont_start)
+        board->_last_read_val = 0xFF;
       
       i = (board->_buff_start + board->_buff_n) % I2C_REQUEST_BUFF_N;
       // either it's of size ModIOData or ModIODataBuff, which is bigger. buff is of size ModIODataBuff
@@ -158,7 +161,7 @@ ModIOBoard::ModIOBoard(ModIODataCreate* data, HostComm* host_comm, StreamMarker*
   _marker = marker;
   _working = 0;
 
-  _last_read_val = 0;
+  _last_read_val = 0xFF;
   _buff_start = 0;
   _buff_n = 0;
     
@@ -236,6 +239,7 @@ void ModIOBoard::loop_board()
 {
   uint8_t last_i;
   uint8_t i;
+  bool last_read_same = false;
 
   if (!_buff_n)
     return;
@@ -245,7 +249,7 @@ void ModIOBoard::loop_board()
     if (!_controller.finished())
       return;
     
-    // do read if we're reading
+    // do read stage if we're reading
     if (
         (_request_buff[_buff_start].header.cmd == ModIOCmd::read_dig
          || _request_buff[_buff_start].header.cmd == ModIOCmd::read_dig_cont_start)
@@ -258,10 +262,20 @@ void ModIOBoard::loop_board()
       return;
     }
     
+    // now we're finished reading or writing
     last_i = _buff_start;
     _request_buff[last_i].header.header.err = HostError::no_error;
     _request_buff[last_i].header.header.len = sizeof(ModIODataBuff);
+
     // data was read into the buff directly if reading
+    // check if data is unchanged for cont. reading
+    if (_request_buff[last_i].header.cmd == ModIOCmd::read_dig_cont_start)
+    {
+      if (_last_read_val == _request_buff[last_i].value)
+        last_read_same = true;
+      else
+        _last_read_val = _request_buff[last_i].value;
+    }
 
     switch (_request_buff[last_i].header.cmd)
     {
@@ -273,7 +287,7 @@ void ModIOBoard::loop_board()
         else
         {
 #if MARKER_ENABLED
-          if (_marker->is_enabled())
+          if (_marker->is_enabled() && !last_read_same)
             _request_buff[last_i].header.header.err = _marker->add_mark(&_request_buff[last_i].marker);
 #endif
         }
@@ -285,7 +299,8 @@ void ModIOBoard::loop_board()
         break;
     }
 
-    if (_request_buff[last_i].header.cmd == ModIOCmd::read_dig_cont_start)
+    // queue it for reading again
+    if (_request_buff[last_i].header.cmd == ModIOCmd::read_dig_cont_start && _request_buff[last_i].header.header.err == HostError::no_error)
     {
       if (_buff_n != 1)
       {
@@ -297,15 +312,20 @@ void ModIOBoard::loop_board()
           // don't copy if full and it's in place
           memcpy(&_request_buff[(_buff_start - 1 + _buff_n) % I2C_REQUEST_BUFF_N], &_request_buff[last_i], sizeof(ModIODataBuff));
       }
+
+      // only send if it's unchanged
+      if (!last_read_same)
+        _host_comm->send_to_host(&_request_buff[last_i], sizeof(ModIODataBuff));
     }
     else
     {
       _buff_n--;
       _buff_start++;
       _buff_start = _buff_start % I2C_REQUEST_BUFF_N;
+
+      _host_comm->send_to_host(&_request_buff[last_i], sizeof(ModIODataBuff));
     }
 
-    _host_comm->send_to_host(&_request_buff[last_i], sizeof(ModIODataBuff));
     _working = 0;
   }
 
