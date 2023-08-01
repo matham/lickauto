@@ -47,6 +47,9 @@ class HostComm
     void send_to_host(void* data, uint8_t len);
   
   private:
+    uint _last_led_time;
+    bool _led_high;
+
     StreamMarker* _marker;
 
     uint8_t _read_buff[256];

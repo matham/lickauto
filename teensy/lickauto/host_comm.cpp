@@ -15,6 +15,11 @@ HostComm::HostComm()
 void HostComm::setup(StreamMarker* marker)
 {
   _marker = marker;
+
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, LOW);
+  _led_high = false;
+  _last_led_time = millis();
 }
 
 void HostComm::loop()
@@ -24,8 +29,22 @@ void HostComm::loop()
   int item;
 
   if (n <= 0)
+  {
     // no data to read
+    if (millis() - _last_led_time >= 500)
+    {
+      // switch LED if timed-out
+      digitalWrite(LED_BUILTIN, _led_high ? LOW : HIGH);
+      _led_high = !_led_high;
+      _last_led_time = millis();
+    }
     return;
+  }
+
+  // switch LED for every packet
+  digitalWrite(LED_BUILTIN, _led_high ? LOW : HIGH);
+  _led_high = !_led_high;
+  _last_led_time = millis();
 
   header.len = sizeof(HostData);
   header.code = HostCode::comm;
