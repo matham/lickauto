@@ -91,6 +91,7 @@ void ModIOBoard::host_msg(ModIOData* msg, HostComm* host_comm, StreamMarker* mar
 
       break;
 
+    case ModIOCmd::address_change:
     case ModIOCmd::write_dig:
       if (msg->header.len != sizeof(ModIODataBuff))
       {
@@ -100,7 +101,7 @@ void ModIOBoard::host_msg(ModIOData* msg, HostComm* host_comm, StreamMarker* mar
     case ModIOCmd::read_dig_cont_start:
     case ModIOCmd::read_dig:
     case ModIOCmd::read_dig_cont_stop:
-      if (msg->cmd != ModIOCmd::write_dig && msg->header.len != sizeof(ModIOData))
+      if (msg->cmd != ModIOCmd::write_dig && msg->cmd != ModIOCmd::address_change && msg->header.len != sizeof(ModIOData))
       {
         err = HostError::bad_input;
         break;
@@ -279,6 +280,7 @@ void ModIOBoard::loop_board()
 
     switch (_request_buff[last_i].header.cmd)
     {
+      case ModIOCmd::address_change:
       case ModIOCmd::write_dig:
       case ModIOCmd::read_dig:
       case ModIOCmd::read_dig_cont_start:
@@ -334,6 +336,14 @@ void ModIOBoard::loop_board()
   
   switch (_request_buff[_buff_start].header.cmd)
   {
+    case ModIOCmd::address_change:
+      _dev_buff[0] = 0xF0;
+      _dev_buff[1] = _request_buff[_buff_start].value;
+      _controller.write_async(_request_buff[_buff_start].header.address, _dev_buff, 2, true);
+
+      _working = 1;
+      break;
+
     case ModIOCmd::write_dig:
       _dev_buff[0] = 0x10;
       _dev_buff[1] = _request_buff[_buff_start].value;

@@ -19,6 +19,7 @@ enum class ModIOCmd : uint8_t {
   read_dig_cont_stop,
   read_dig,
   write_dig,
+  address_change,
   blank, // nothing, just a placeholder internally - should not be used externally
   end,
 };
