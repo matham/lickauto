@@ -278,7 +278,7 @@ void ModIOBoard::loop_board()
         && !_controller.has_error()
        )
     {
-      _controller.read_async(_request_buff[_buff_start].header.address, &_request_buff[_buff_start].value, 1, true);
+      _controller.read_async(_address, &_request_buff[_buff_start].value, 1, true);
       _working++;
       return;
     }
@@ -359,7 +359,7 @@ void ModIOBoard::loop_board()
     case ModIOCmd::address_change:
       _dev_buff[0] = 0xF0;
       _dev_buff[1] = _request_buff[_buff_start].value;
-      _controller.write_async(_request_buff[_buff_start].header.address, _dev_buff, 2, true);
+      _controller.write_async(_address, _dev_buff, 2, true);
 
       _last_msg_ts = millis();
       _working = 1;
@@ -368,7 +368,7 @@ void ModIOBoard::loop_board()
     case ModIOCmd::write_dig:
       _dev_buff[0] = 0x10;
       _dev_buff[1] = _request_buff[_buff_start].value;
-      _controller.write_async(_request_buff[_buff_start].header.address, _dev_buff, 2, true);
+      _controller.write_async(_address, _dev_buff, 2, true);
 
       _last_msg_ts = millis();
       _working = 1;
@@ -377,7 +377,7 @@ void ModIOBoard::loop_board()
     case ModIOCmd::read_dig:
     case ModIOCmd::read_dig_cont_start:
       _dev_buff[0] = 0x20;
-      _controller.write_async(_request_buff[_buff_start].header.address, _dev_buff, 1, true);
+      _controller.write_async(_address, _dev_buff, 1, true);
       
       _last_msg_ts = millis();
       _working = 1;
