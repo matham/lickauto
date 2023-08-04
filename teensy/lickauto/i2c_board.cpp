@@ -55,8 +55,28 @@ void ModIOBoard::host_msg(ModIOData* msg, HostComm* host_comm, StreamMarker* mar
         break;
       }
 
-      boards[i] = new ModIOBoard((ModIODataCreate*) msg, host_comm, marker, &err);
-      if (err != HostError::no_error)
+      switch (((ModIODataCreate*)msg)->header.port)
+      {
+        // see https://github.com/Richard-Gemmell/teensy4_i2c/tree/master#ports-and-pins for def of ports
+        case 0:
+          boards[i] = new ModIOBoard((ModIODataCreate*) msg, host_comm, marker, Master, &err);
+          break;
+        case 1:
+          boards[i] = new ModIOBoard((ModIODataCreate*) msg, host_comm, marker, Master1, &err);
+          break;
+        case 2:
+          boards[i] = new ModIOBoard((ModIODataCreate*) msg, host_comm, marker, Master2, &err);
+          break;
+        default:
+          boards[i] = NULL;
+          err = HostError::bad_input;
+          break;
+      }
+
+      if (err == HostError::no_error && boards[i] == NULL)
+        err = HostError::no_resource;
+
+      if (err != HostError::no_error && boards[i] != NULL)
       {
         delete boards[i];
         boards[i] = NULL;
@@ -154,7 +174,7 @@ inline ModIOBoard* ModIOBoard::locate_board(uint8_t port, uint8_t address)
   return boards[i];
 }
 
-ModIOBoard::ModIOBoard(ModIODataCreate* data, HostComm* host_comm, StreamMarker* marker, HostError* err) : _controller(Master)
+ModIOBoard::ModIOBoard(ModIODataCreate* data, HostComm* host_comm, StreamMarker* marker, I2CMaster& controller, HostError* err) : _controller(controller)
 {
   _port = data->header.port;
   _address = data->header.address;
@@ -165,26 +185,11 @@ ModIOBoard::ModIOBoard(ModIODataCreate* data, HostComm* host_comm, StreamMarker*
   _last_read_val = 0xFF;
   _buff_start = 0;
   _buff_n = 0;
-    
+
   if (_address & 0b10000000)
+  {
     *err = HostError::bad_input;
     return;
-
-  switch (_port)
-  {
-    // see https://github.com/Richard-Gemmell/teensy4_i2c/tree/master#ports-and-pins for def of ports
-    case 0:
-      _controller = Master;
-      break;
-    case 1:
-      _controller = Master1;
-      break;
-    case 2:
-      _controller = Master2;
-      break;
-    default:
-      *err = HostError::bad_input;
-      return;
   }
 
   switch (data->pullup)

@@ -70,7 +70,7 @@ struct ModIODataBuff
 class ModIOBoard
 {
   public:
-    ModIOBoard(ModIODataCreate* data, HostComm* host_comm, StreamMarker* marker, HostError* err);
+    ModIOBoard(ModIODataCreate* data, HostComm* host_comm, StreamMarker* marker, I2CMaster& controller, HostError* err);
     void delete_board();
     void loop_board();
 
