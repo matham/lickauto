@@ -15,6 +15,7 @@ class HostError(IntEnum):
     bad_state = 7
     program_error = 8
     dropping_data = 9
+    timed_out = 10
 
 
 class HostCode(IntEnum):
