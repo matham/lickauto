@@ -15,6 +15,7 @@ enum class HostError : uint8_t {
   bad_state,
   program_error,
   dropping_data,
+  timed_out,
   end,
 };
 

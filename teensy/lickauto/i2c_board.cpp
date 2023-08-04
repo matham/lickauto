@@ -248,7 +248,22 @@ void ModIOBoard::loop_board()
   if (_working)
   {
     if (!_controller.finished())
+    {
+      if (millis() - _last_msg_ts >= 500)
+      {
+        _request_buff[_buff_start].header.header.err = HostError::timed_out;
+        _request_buff[_buff_start].header.header.len = sizeof(ModIOData);
+
+        _host_comm->send_to_host(&_request_buff[_buff_start], sizeof(ModIOData));
+
+        _buff_n--;
+        _buff_start++;
+        _buff_start = _buff_start % I2C_REQUEST_BUFF_N;
+
+        _working = 0;
+      }
       return;
+    }
     
     // do read stage if we're reading
     if (
@@ -341,6 +356,7 @@ void ModIOBoard::loop_board()
       _dev_buff[1] = _request_buff[_buff_start].value;
       _controller.write_async(_request_buff[_buff_start].header.address, _dev_buff, 2, true);
 
+      _last_msg_ts = millis();
       _working = 1;
       break;
 
@@ -349,6 +365,7 @@ void ModIOBoard::loop_board()
       _dev_buff[1] = _request_buff[_buff_start].value;
       _controller.write_async(_request_buff[_buff_start].header.address, _dev_buff, 2, true);
 
+      _last_msg_ts = millis();
       _working = 1;
       break;
 
@@ -357,6 +374,7 @@ void ModIOBoard::loop_board()
       _dev_buff[0] = 0x20;
       _controller.write_async(_request_buff[_buff_start].header.address, _dev_buff, 1, true);
       
+      _last_msg_ts = millis();
       _working = 1;
       break;
 

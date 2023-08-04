@@ -90,6 +90,7 @@ class ModIOBoard
     uint8_t _buff_start;
     uint8_t _buff_n;
     uint8_t _working;
+    uint _last_msg_ts;
     uint8_t _dev_buff[4];
   
     HostComm* _host_comm;
