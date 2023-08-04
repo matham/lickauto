@@ -311,7 +311,7 @@ class TeensyComm:
             start = end
 
             # only mark sends back additional data
-            if code in (
+            if cmd in (
                     ModIOCmd.write_dig, ModIOCmd.read_dig,
                     ModIOCmd.read_dig_cont_start, ModIOCmd.address_change
             ):
