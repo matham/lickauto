@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+
+[tool.setuptools.packages.find]
+exclude = ["teensy*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "lickauto.__version__"}
+
+
+[project]
+name = "lickauto"
+description = "Valve and photobeam control for licking experiment."
+readme = "README.rst"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+keywords = ["egg", "bacon", "sausage", "tomatoes", "Lobster Thermidor"]
+authors = [
+  {name = "Matt Einhorn", email = "matt@einhorn.dev"},
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python"
+]
+
+dependencies = [
+  "pyserial",
+]
+
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/matham/lickauto"
+Documentation = "https://matham.github.io/lickauto/index.html"
+Repository = "https://github.com/matham/lickauto.git"
