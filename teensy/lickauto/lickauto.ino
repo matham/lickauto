@@ -1,3 +1,10 @@
+// to install, you need to install the arduino IDE
+// then install Teensyduino from https://www.pjrc.com/teensy/td_download.html
+// then install https://github.com/Richard-Gemmell/teensy4_i2c
+// by downloading https://github.com/Richard-Gemmell/teensy4_i2c/archive/refs/tags/v2.0.0-beta.2.zip
+// and installing it as a zip library
+
+
 #include "Arduino.h"
 #include "i2c_board.h"
 #include "host_comm.h"
